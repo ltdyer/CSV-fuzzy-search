@@ -5,6 +5,16 @@ from datetime import datetime
 
 Base = declarative_base()
 
+class EntityMatch(Base):
+    __tablename__ = "entity_matches"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    type: Mapped[str] = mapped_column(String, nullable=False)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+
+    company: Mapped["Company"] = relationship(back_populates="entity_matches")
+
 class Company(Base):
     __tablename__ = "companies"
     
@@ -14,6 +24,7 @@ class Company(Base):
     csv_file_id: Mapped[int] = mapped_column(ForeignKey("csv_files.id"))
 
     csv_file: Mapped["CSVFile"] = relationship(back_populates="companies")
+    entity_matches: Mapped[list["EntityMatch"]] = relationship(back_populates="company")
 
 
 class CSVFile(Base):
@@ -21,7 +32,7 @@ class CSVFile(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     filename: Mapped[str] = mapped_column(String, nullable=False)
-    uploaded_at: Mapped[datetime] = mapped_column(default=datetime.now())
+    uploaded_at: Mapped[datetime] = mapped_column(default=datetime.now)
     status: Mapped[str] = mapped_column(String, nullable=False)
 
     companies: Mapped[list["Company"]] = relationship(back_populates="csv_file")
