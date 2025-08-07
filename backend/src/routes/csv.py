@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import Depends, HTTPException, status, APIRouter, Response, UploadFile, File
 from src.db.dbConnection import get_db
 import io
@@ -5,6 +6,7 @@ import csv
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.crud import get_all_csvs
 from src.db.schemas import CSVSchema, CompanySchema
+from src.db.models import CSVFile, Company
 
 router = APIRouter()
 
@@ -20,8 +22,9 @@ async def upload_csv(session: AsyncSession = Depends(get_db), file: UploadFile =
     decoded = contents.decode("utf-8")
     csv_io = io.StringIO(decoded)
     reader = csv.DictReader(csv_io)
-    
-    csv_record = CSVSchema(filename=file.filename)
+    print(file)
+    curr_date = datetime.now()
+    csv_record = CSVFile(filename=file.filename, status="Pending Review")
     session.add(csv_record)
     await session.flush()
 
@@ -30,7 +33,7 @@ async def upload_csv(session: AsyncSession = Depends(get_db), file: UploadFile =
         name = row.get("Company Name")
         website = row.get("Website")
         if name and website:
-            company = CompanySchema(name=name, website=website, csv_file_id=csv_record.id)
+            company = Company(name=name, website=website, csv_file_id=csv_record.id)
             companies.append(company)
     
     session.add_all(companies)
