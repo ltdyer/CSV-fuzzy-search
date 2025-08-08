@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button, Input } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { useApi } from "./Api/useApi";
-import type { TableRowData } from "./Interfaces/interfaces";
+import type { CsvTableRowData } from "./Interfaces/interfaces";
 
 interface FileUploadProps {
   handleCsvUploadData: (csvData: any) => {};
@@ -25,7 +25,7 @@ export const FileUpload = ({ handleCsvUploadData }: FileUploadProps) => {
       formData.append("file", csv);
 
       const result = await upload(formData);
-      const parsedResult: TableRowData = result["csv_record"];
+      const parsedResult: CsvTableRowData = result["csv_record"];
       // const response = await fetch("http://localhost:8080/upload", {
       //   method: "POST",
       //   body: formData,

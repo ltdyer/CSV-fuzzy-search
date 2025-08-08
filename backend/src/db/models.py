@@ -13,7 +13,7 @@ class EntityMatch(Base):
     type: Mapped[str] = mapped_column(String, nullable=False)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
 
-    company: Mapped["Company"] = relationship(back_populates="entity_matches")
+    company: Mapped["Company"] = relationship(back_populates="entities")
 
 class Company(Base):
     __tablename__ = "companies"
@@ -24,7 +24,7 @@ class Company(Base):
     csv_file_id: Mapped[int] = mapped_column(ForeignKey("csv_files.id"))
 
     csv_file: Mapped["CSVFile"] = relationship(back_populates="companies")
-    entity_matches: Mapped[list["EntityMatch"]] = relationship(back_populates="company")
+    entities: Mapped[list["EntityMatch"]] = relationship(back_populates="company")
 
 
 class CSVFile(Base):

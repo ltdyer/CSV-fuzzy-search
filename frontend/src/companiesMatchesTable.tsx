@@ -8,23 +8,42 @@ import {
   TableRow,
   Paper,
   Button,
-  Drawer,
   Typography,
+  Collapse,
+  Box,
 } from "@mui/material";
-import { type CompaniesTableProps } from "./Interfaces/interfaces";
+import {
+  type CompaniesTableProps,
+  type getCompanyResponse,
+} from "./Interfaces/interfaces";
+import { useApi } from "./Api/useApi";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import React from "react";
 
 export function CompaniesMatchesTable({ tableData }: CompaniesTableProps) {
-  const [selectedDetails, setSelectedDetails] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const handleDetailsClick = (details: string) => {
-    setSelectedDetails(details);
-    setDrawerOpen(true);
-  };
+  const { getCompanyById } = useApi();
+  const [openRows, setOpenRows] = useState<Record<string | number, boolean>>(
+    {}
+  );
+  const [fetchedCompanyData, setFetchedCompanyData] =
+    useState<getCompanyResponse>();
 
   useEffect(() => {
     console.log(tableData);
   }, [tableData]);
+
+  const toggleRow = (id: number) => {
+    setOpenRows((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const getCompanyDetails = async (companyId: number) => {
+    const result: getCompanyResponse = await getCompanyById(companyId);
+    setFetchedCompanyData(result);
+    toggleRow(companyId);
+  };
 
   return (
     <>
@@ -33,30 +52,77 @@ export function CompaniesMatchesTable({ tableData }: CompaniesTableProps) {
           <TableHead>
             <TableRow>
               <TableCell style={{ display: "none" }}>ID</TableCell>
-              <TableCell>Filename</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Uploaded At</TableCell>
-              <TableCell>Details</TableCell>
+              <TableCell>
+                <b>Company Name</b>
+              </TableCell>
+              <TableCell>
+                <b>Website</b>
+              </TableCell>
+              <TableCell>
+                <b>Details</b>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {tableData !== null
               ? tableData?.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell style={{ display: "none" }}>{row.id}</TableCell>
-                    <TableCell>{row.filename}</TableCell>
-                    <TableCell>{row.status}</TableCell>
-                    <TableCell>{row.uploaded_at}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => handleDetailsClick(row.companies)}
+                  <React.Fragment key={row.id}>
+                    <TableRow key={row.id}>
+                      <TableCell style={{ display: "none" }}>
+                        {row.id}
+                      </TableCell>
+                      <TableCell>{row.name}</TableCell>
+                      <TableCell>{row.website}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => getCompanyDetails(row.id)}
+                        >
+                          View Matched Entities
+                          {openRows[row.id] ? <ExpandLess /> : <ExpandMore />}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell
+                        style={{ paddingBottom: 0, paddingTop: 0 }}
+                        colSpan={3}
                       >
-                        View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                        <Collapse
+                          in={openRows[row.id]}
+                          timeout="auto"
+                          unmountOnExit
+                        >
+                          <Box margin={1}>
+                            <Typography variant="subtitle1" gutterBottom>
+                              Matched Entities
+                            </Typography>
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>Name</TableCell>
+                                  <TableCell>Type</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {fetchedCompanyData
+                                  ? fetchedCompanyData.entities.map(
+                                      (entity, index) => (
+                                        <TableRow key={index}>
+                                          <TableCell>{entity.name}</TableCell>
+                                          <TableCell>{entity.type}</TableCell>
+                                        </TableRow>
+                                      )
+                                    )
+                                  : []}
+                              </TableBody>
+                            </Table>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
                 ))
               : []}
           </TableBody>

@@ -27,16 +27,7 @@ def match_entity(companies: List[Company]):
     entity_matches = []
     entity_db = []
     for company in companies:
-        domain = extract_domain(company.website)
         normalized_name = normalize_name(company.name)
-
-        domain_match_key = None
-        owner_key = None
-        for key, entity in json_data.items():
-            if key.startswith("idn:") and extract_domain(entity["name"]) == domain:
-                domain_match_key = key
-                owner_key = entity.get("owner")
-                break
 
         name_candidates = []
         for key, entity in json_data.items():
@@ -46,6 +37,7 @@ def match_entity(companies: List[Company]):
                     if f:
                         score = fuzz.ratio(normalized_name, normalize_name(f))
                         if score > 80:
+                            print(entity)
                             filtered_entity = filtering_entity(entity)
                             name_candidates.append((score, key, filtered_entity))
                             entity_db.append(EntityMatch(name=filtered_entity["name"], type=filtered_entity['type'], company_id=company.id))
@@ -55,7 +47,6 @@ def match_entity(companies: List[Company]):
            company.name: name_candidates
         })
 
-    # await add_entities_to_db(entity_db)
     return {
         "entity_matches": entity_matches,
         "entity_db": entity_db

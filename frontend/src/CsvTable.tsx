@@ -10,21 +10,56 @@ import {
   Button,
   Drawer,
   Typography,
+  Modal,
+  Box,
 } from "@mui/material";
-import { type CsvTableProps } from "./Interfaces/interfaces";
+import { type CsvTableProps, type Company } from "./Interfaces/interfaces";
+import { useApi } from "./Api/useApi";
 
-export function CsvTable({ tableData }: CsvTableProps) {
-  const [selectedDetails, setSelectedDetails] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+interface csvDetailsResponse {
+  num_of_rows: number;
+  num_of_entities: number;
+}
 
-  const handleDetailsClick = (details: string) => {
-    setSelectedDetails(details);
-    setDrawerOpen(true);
+export function CsvTable({ tableData, onClickDetailsButton }: CsvTableProps) {
+  const [selectedCsvId, setSelectedCsvId] = useState<number>();
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalDetails, setModalDetails] = useState<string[]>();
+  const { getCsvDetails } = useApi();
+
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 400,
+    bgcolor: "background.paper",
+    border: "2px solid #000",
+    boxShadow: 24,
+    p: 4,
   };
 
-  useEffect(() => {
-    console.log(tableData);
-  }, [tableData]);
+  const handleViewClick = (selectedCsvId: number) => {
+    setSelectedCsvId(selectedCsvId);
+    setPanelOpen(true);
+    onClickDetailsButton(selectedCsvId, true);
+  };
+
+  const handleDetailsClick = async (selectedCsvId: number) => {
+    const results: csvDetailsResponse = await getCsvDetails(selectedCsvId);
+    console.log(results);
+    setModalDetails([
+      results.num_of_rows.toString(),
+      results.num_of_entities.toString(),
+    ]);
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setModalDetails([]);
+  };
 
   return (
     <>
@@ -36,6 +71,7 @@ export function CsvTable({ tableData }: CsvTableProps) {
               <TableCell>Filename</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Uploaded At</TableCell>
+              <TableCell>View</TableCell>
               <TableCell>Details</TableCell>
             </TableRow>
           </TableHead>
@@ -51,9 +87,18 @@ export function CsvTable({ tableData }: CsvTableProps) {
                       <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => handleDetailsClick(row.companies)}
+                        onClick={() => handleViewClick(row.id)}
                       >
                         View
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleDetailsClick(row.id)}
+                      >
+                        Details
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -63,19 +108,27 @@ export function CsvTable({ tableData }: CsvTableProps) {
         </Table>
       </TableContainer>
 
-      {/* Drawer for showing details */}
-      <Drawer
-        anchor="right"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+      <Modal
+        open={modalOpen}
+        onClose={handleModalClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
-        <div style={{ width: 300, padding: 16 }}>
-          <Typography variant="h6" gutterBottom>
-            File Details
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            {modalDetails
+              ? `Number of Rows: ${modalDetails[0]}`
+              : "Wow couldnt find details"}
           </Typography>
-          <Typography variant="body1">{selectedDetails}</Typography>
-        </div>
-      </Drawer>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            {modalDetails
+              ? `Number of Matches: ${modalDetails[1]}`
+              : "Wow couldnt find details"}
+          </Typography>
+        </Box>
+      </Modal>
+
+      {/* <DetailsPanel isOpen={panelOpen} csvId={selectedCsvId} /> */}
     </>
   );
 }
